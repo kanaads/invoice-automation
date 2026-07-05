@@ -4,8 +4,8 @@ import time
 from langchain_groq import ChatGroq
 from pydantic import SecretStr
 
-WAIT_SECONDS = 12 * 60
-MAX_WAIT_CYCLES = 3
+WAIT_SECONDS = 60
+MAX_WAIT_CYCLES = 5
 
 
 def _is_rate_limit(exc: Exception) -> bool:

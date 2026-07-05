@@ -1,0 +1,16 @@
+INVOICE #INV-9001
+
+Vendor: Precision Fabrication Partners
+Date: 2026-02-01
+Due Date: 2026-03-01
+
+Item        Qty     Unit Price      Amount
+WidgetA     14      $250.00         $3,500.00
+WidgetB     10      $500.00         $5,000.00
+GadgetX     4       $750.00         $3,000.00
+
+Subtotal: $11,500.00
+Tax: $0.00
+Total: $11,500.00
+
+Payment Terms: Net 30

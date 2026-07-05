@@ -12,6 +12,7 @@ _MODELS = {
     "openai": "gpt-4o",
     "anthropic": "claude-sonnet-4-5",
     "ollama": "fastcontext",
+    "bedrock": "anthropic.claude-3-haiku-20240307-v1:0",
 }
 
 
@@ -55,5 +56,12 @@ def get_llm(temperature: float = 0.0):
         from langchain_anthropic import ChatAnthropic
 
         return ChatAnthropic(model=_MODELS["anthropic"], temperature=temperature)
+
+    if backend == "bedrock":
+        from langchain_aws import ChatBedrockConverse
+
+        model = os.environ.get("BEDROCK_MODEL_ID", _MODELS["bedrock"])
+        region = os.environ.get("AWS_REGION", "us-east-1")
+        return ChatBedrockConverse(model=model, region_name=region, temperature=temperature)
 
     raise ValueError(f"Unknown LLM_BACKEND: {backend!r}. Expected one of {list(_MODELS)}.")

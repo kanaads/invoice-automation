@@ -9,7 +9,10 @@ From/To/Subject headers and any signature/notes -- only the invoice fields matte
 
 Rules:
 - Normalise item names by removing spaces and fixing obvious OCR errors, e.g. \
-"Widget A" -> "WidgetA", "Gadget X" -> "GadgetX".
+"Widget A" -> "WidgetA", "Gadget X" -> "GadgetX". Also strip trailing annotations \
+or qualifiers in parentheses that aren't part of the canonical item name, e.g. \
+"WidgetA (rush order)" -> "WidgetA", "GadgetX (expedited)" -> "GadgetX" -- these \
+describe the order, not a different product.
 - Fix OCR character substitutions in numbers, e.g. a capital "O" used in place of \
 digit "0" (e.g. "$3,500.O0" -> 3500.00), and "2O26" -> 2026 (dates aren't extracted \
 as fields here, only used to sanity-check numbers).
