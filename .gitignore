@@ -16,5 +16,9 @@ data/inventory.db
 .idea/
 .vscode/
 *.log
-.claude/scheduled_tasks.lock
+.claude/
 graphify-out/
+CLAUDE.md
+docs/GALATIQ_README.md
+docs/PHASE_ZERO_PLAN.md
+docs/PLAN.md

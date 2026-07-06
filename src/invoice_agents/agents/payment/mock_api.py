@@ -1,4 +1,4 @@
-"""Mock payment API -- simulates a banking call, per the assignment's mock_payment stub."""
+"""Mock payment API -- simulates a banking call."""
 import uuid
 from datetime import datetime, timezone
 
