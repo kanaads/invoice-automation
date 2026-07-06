@@ -1,3 +1,5 @@
+import sqlite3
+
 from src.invoice_agents.agents.payment.agent import build_payment_graph
 from src.invoice_agents.agents.validation.db import check_duplicate, get_stock
 
@@ -64,6 +66,45 @@ def test_rejection_logged(fresh_db):
     )
     assert state["rejection_log"]["invoice_id"] == "INV-TEST"
     assert state["rejection_log"]["flags"]
+
+
+def test_rejection_persisted_to_db(fresh_db):
+    """rejection_log must not vanish when the process exits -- it's written to the DB too."""
+    graph = build_payment_graph(db_path=fresh_db)
+    graph.invoke(
+        _state(approval_decision="REJECT", validation_flags=[{"type": "STOCK_MISMATCH", "blocking": True}])
+    )
+    conn = sqlite3.connect(fresh_db)
+    try:
+        row = conn.execute(
+            "SELECT invoice_id, vendor, flags FROM rejections WHERE invoice_id = ?", ("INV-TEST",)
+        ).fetchone()
+    finally:
+        conn.close()
+    assert row is not None
+    assert row[1] == "Test Co"
+    assert "STOCK_MISMATCH" in row[2]
+
+
+def test_rejection_persisted_with_null_invoice(fresh_db):
+    """Extraction-failure rejections have no extracted_invoice -- must still write a row."""
+    graph = build_payment_graph(db_path=fresh_db)
+    graph.invoke(
+        _state(
+            approval_decision="REJECT",
+            extracted_invoice=None,
+            validation_flags=[{"type": "EXTRACTION_FAILED", "blocking": True}],
+        )
+    )
+    conn = sqlite3.connect(fresh_db)
+    try:
+        row = conn.execute("SELECT invoice_id, vendor, flags FROM rejections").fetchone()
+    finally:
+        conn.close()
+    assert row is not None
+    assert row[0] is None
+    assert row[1] is None
+    assert "EXTRACTION_FAILED" in row[2]
 
 
 def test_rejection_no_stock_change(fresh_db):

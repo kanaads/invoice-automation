@@ -27,6 +27,10 @@ def test_db(tmp_path_factory):
         "CREATE TABLE paid_invoices (invoice_id TEXT PRIMARY KEY, vendor TEXT NOT NULL, "
         "amount REAL NOT NULL, paid_at TEXT NOT NULL)"
     )
+    cur.execute(
+        "CREATE TABLE rejections (invoice_id TEXT, vendor TEXT, reason TEXT NOT NULL, "
+        "flags TEXT NOT NULL, rejected_at TEXT NOT NULL)"
+    )
     conn.commit()
     conn.close()
     return str(db_path)

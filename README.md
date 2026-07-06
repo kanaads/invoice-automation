@@ -31,6 +31,24 @@ CLI (main.py)
 
 Each stage is its own compiled LangGraph sub-graph (`src/invoice_agents/agents/*/agent.py`), independently testable. Full test suite: `.venv/bin/python -m pytest tests/ -v` (90 tests).
 
+## Scope & Assumptions
+
+Deliberate cuts, so scope is explicit rather than something to infer from the code:
+
+- **CLI-only.** No web UI — `main.py` is the only interface. `streamlit` is in
+  `requirements.txt` but unused; adding a UI is future work, not part of this MVP.
+- **Single SQLite file, no concurrency handling.** `data/inventory.db` assumes one
+  process at a time; there's no locking/retry strategy for concurrent writers.
+- **Payment is a mock API.** `agents/payment/mock_api.py` simulates a successful
+  payment call — no real payment gateway integration.
+- **No invoice-revision/versioning support.** A resubmitted invoice with the same
+  `invoice_id` is flagged `DUPLICATE_INVOICE` and rejected outright, even if it's a
+  legitimate correction (see `docs/DATA_MODEL.md`'s note on this — adding a
+  `revision` column was explicitly out of scope for this assignment).
+- **LLM backend is swappable but only one is exercised by default.** `LLM_BACKEND`
+  supports `groq|gemini|xai|openai|anthropic|ollama|bedrock` (`src/invoice_agents/llm.py`),
+  but CI/local runs default to `groq`; the others aren't continuously verified.
+
 ---
 
 ## Demo: 4 corner-case scenarios

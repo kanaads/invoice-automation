@@ -45,6 +45,34 @@ def test_invoice_end_to_end(filename, expected_status, expected_flag, fresh_db):
             assert expected_flag in flags_str
 
 
+def test_extraction_failure_routes_to_structured_rejection(fresh_db, monkeypatch):
+    """Exhausting MAX_EXTRACTION_ATTEMPTS must not crash the pipeline -- it must flow
+    through the same rejection handler blocked invoices use, with reason EXTRACTION_FAILED."""
+    from src.invoice_agents.agents.ingestion import extractor
+
+    def always_fails(raw_text, llm):
+        raise RuntimeError("simulated permanent failure")
+
+    monkeypatch.setattr(extractor, "extract_invoice", always_fails)
+
+    graph = build_graph(db_path=fresh_db)
+    state = graph.invoke(
+        {
+            "invoice_path": "data/invoices/invoice_1001.txt",
+            "validation_flags": [],
+            "reflection_count": 0,
+            "steps_taken": [],
+        }
+    )
+
+    assert state["extracted_invoice"] is None
+    assert state["approval_decision"] == "REJECT"
+    assert "EXTRACTION_FAILED" in str(state["validation_flags"])
+    assert state["rejection_log"] is not None
+    assert "EXTRACTION_FAILED" in str(state["rejection_log"]["flags"])
+    assert state.get("payment_result") is None
+
+
 def test_duplicate_invoice_is_stateful(fresh_db):
     """INV-1004 must be paid first; only then does INV-1004_revised get flagged as a duplicate."""
     graph = build_graph(db_path=fresh_db)

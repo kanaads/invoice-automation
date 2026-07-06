@@ -16,5 +16,5 @@ data/inventory.db
 .idea/
 .vscode/
 *.log
-.claude/
+.claude/scheduled_tasks.lock
 graphify-out/

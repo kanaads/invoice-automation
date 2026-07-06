@@ -1,3 +1,4 @@
+import json
 import sqlite3
 from typing import Optional
 
@@ -46,6 +47,25 @@ def record_payment(
         conn.execute(
             "INSERT INTO paid_invoices (invoice_id, vendor, amount, paid_at) VALUES (?, ?, ?, ?)",
             (invoice_id, vendor, amount, paid_at),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def record_rejection(
+    invoice_id: Optional[str],
+    vendor: Optional[str],
+    reason: str,
+    flags: list[dict],
+    rejected_at: str,
+    db_path: str = DEFAULT_DB_PATH,
+) -> None:
+    conn = sqlite3.connect(db_path)
+    try:
+        conn.execute(
+            "INSERT INTO rejections (invoice_id, vendor, reason, flags, rejected_at) VALUES (?, ?, ?, ?, ?)",
+            (invoice_id, vendor, reason, json.dumps(flags), rejected_at),
         )
         conn.commit()
     finally:

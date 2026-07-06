@@ -30,9 +30,10 @@ def main() -> None:
         }
     )
 
+    status = "PAID" if state.get("approval_decision") == "APPROVE" else "REJECTED"
     result = {
         "invoice_path": args.invoice_path,
-        "status": "PAID" if state.get("approval_decision") == "APPROVE" else "REJECTED",
+        "status": status,
         "extracted_invoice": state.get("extracted_invoice"),
         "validation_flags": state.get("validation_flags"),
         "approval_decision": state.get("approval_decision"),
@@ -42,6 +43,17 @@ def main() -> None:
         "rejection_log": state.get("rejection_log"),
         "steps_taken": state.get("steps_taken"),
     }
+
+    invoice = state.get("extracted_invoice") or {}
+    vendor = invoice.get("vendor", "?")
+    invoice_id = invoice.get("invoice_id", "?")
+    if status == "PAID":
+        print(f"✅ PAID — {invoice_id}  {vendor}  ${invoice.get('total', '?')}")
+    else:
+        flag_types = [f["type"] for f in state.get("validation_flags") or []]
+        reason = ", ".join(flag_types) if flag_types else state.get("approval_reasoning", "?")
+        print(f"❌ REJECTED — {invoice_id}  {vendor}  reason: {reason}")
+    print()
     print(json.dumps(result, indent=2, default=str))
 
 

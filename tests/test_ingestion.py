@@ -80,3 +80,21 @@ def test_ingest_retry_on_failure(monkeypatch):
     state = _run("data/invoices/invoice_1001.txt")
     assert calls["n"] >= 2
     assert state["extracted_invoice"] is not None
+
+
+def test_ingest_gives_up_after_max_attempts(monkeypatch):
+    """A permanent extraction failure must exhaust MAX_EXTRACTION_ATTEMPTS, not retry forever."""
+    from src.invoice_agents.agents.ingestion import agent, extractor
+
+    calls = {"n": 0}
+
+    def always_fails(raw_text, llm):
+        calls["n"] += 1
+        raise RuntimeError("simulated permanent failure")
+
+    monkeypatch.setattr(extractor, "extract_invoice", always_fails)
+    state = _run("data/invoices/invoice_1001.txt")
+    assert calls["n"] == agent.MAX_EXTRACTION_ATTEMPTS
+    assert state["extracted_invoice"] is None
+    assert "simulated permanent failure" in state["ingestion_error"]
+    assert state["steps_taken"] == ["parse", "extract_failed"]

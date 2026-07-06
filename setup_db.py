@@ -28,6 +28,17 @@ def setup_db(db_path: str = DB_PATH) -> None:
         )
         """
     )
+    cur.execute(
+        """
+        CREATE TABLE IF NOT EXISTS rejections (
+            invoice_id  TEXT,
+            vendor      TEXT,
+            reason      TEXT NOT NULL,
+            flags       TEXT NOT NULL,
+            rejected_at TEXT NOT NULL
+        )
+        """
+    )
 
     # Option B: WidgetC / SuperGizmo / MegaSprocket are deliberately NOT seeded,
     # so get_stock() returns None for them -> UNKNOWN_ITEM (matches the README's
