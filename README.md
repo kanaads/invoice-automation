@@ -2,6 +2,8 @@
 
 A multi-agent LangGraph pipeline that automates invoice processing end-to-end: **Ingestion → Validation → Approval → Payment**.
 
+Designed for finance and accounts-payable workflows where routine invoice processing can be automated while preserving deterministic controls for validation and human oversight for higher-risk decisions.
+
 ## Setup
 
 ```bash
@@ -40,7 +42,7 @@ flowchart TD
     Orchestrator --> Ingestion
 ```
 
-Each stage is its own compiled LangGraph sub-graph (`src/invoice_agents/agents/*/agent.py`), independently testable. Full test suite: `python -m pytest tests/ -v` (90 tests).
+Each stage is its own compiled LangGraph sub-graph (`src/invoice_agents/agents/*/agent.py`), independently testable. The workflow uses SQLite for persistent state and a mock payment API as an external tool; it does not use RAG or long-term conversational memory. Full test suite: `python -m pytest tests/ -v` (90 tests).
 
 ## Scope & Assumptions
 
@@ -100,7 +102,7 @@ python main.py --invoice_path=data/invoices/invoice_9001_demo_highvalue.txt
 
 **What it demos:** A clean $11,500 invoice (over the $10K threshold, no validation flags) routes to a **Generator → Critic loop**: an LLM drafts an APPROVE/REJECT decision with reasoning, a second LLM call critiques that draft (ACCEPT or REVISE), and only an ACCEPT (or hitting the iteration cap) finalizes the decision. `reflection_count` in the output tells you how many rounds it took.
 
-**Reasoning:** The architecture uses a "reflection or critique loop", not just a single LLM call. A single LLM call can't self-correct; a second independent pass that's specifically prompted to be skeptical can catch weak reasoning before it becomes an audit trail. I capped it at 3 iterations (`MAX_REFLECTION_ITERATIONS` in `rules.py`) so a stubborn critic can't loop forever — verified by a test that force-monkeypatches the critic to always return REVISE and confirms the loop still terminates.
+**Reasoning:** The architecture uses a "reflection or critique loop", not just a single LLM call. A single-pass LLM decision has no independent critique step; a second pass that's specifically prompted to be skeptical can catch weak reasoning before it becomes an audit trail. I capped it at 3 iterations (`MAX_REFLECTION_ITERATIONS` in `rules.py`) so a stubborn critic can't loop forever — verified by a test that force-monkeypatches the critic to always return REVISE and confirms the loop still terminates.
 
 **Code:** `src/invoice_agents/agents/approval/agent.py` — `_generate_node` → `_critique_node` → conditional edge (`_critique_router`) either loops back to `generate` or moves to `finalize`. Branches A (blocking flags) and C (≤$10K clean) skip this entirely and make **zero LLM calls** — the reflection loop only runs where judgment genuinely matters.
 
